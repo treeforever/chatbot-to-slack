@@ -8,10 +8,7 @@ import { generateRandomChannelName } from './utils';
 io.on('connection', function (socket: any) {
     console.log('a user connected');
     socket.on('chat message', function (msg: string) {
-        console.log('chatm', msg)
-        postChatRoomName(msg)
-        postInitialMsgToChatRoom(msg, '')
-        io.emit('chat message', msg);
+        initiateChat(msg)
     });
 });
 
@@ -24,10 +21,24 @@ type Channel = {
     id: string,
     name: string
 }
-const postChatRoomName = async (
-    text: string,
+
+const initiateChat = async (msg: string) => {
+    const channel = await createSlackChannel();
+
+    notify(msg, channel)
+    postInitialMsgToChatRoom(msg, channel.name)
+}
+
+/**
+ * Notify everyone in #chatty-live-chat that a channel is created to facilitate a new conversation from the website
+ * @param msg 
+ * @param channel 
+ */
+const notify = async (
+    msg: string,
+    channel: Channel
 ): Promise<TimeStamp> => {
-    const getOptions = (channel: Channel) => ({
+    const options = ({
         url: 'https://slack.com/api/chat.postMessage',
         method: 'POST',
         headers: {
@@ -36,12 +47,11 @@ const postChatRoomName = async (
         },
         data: {
             channel: 'chatty-live-chat',
-            text: `Someone asked a question on your website: ${text}. I created a new channel <#${channel.id}|${channel.name}>, join to start a conversation`,
+            text: `Someone started a conversation: "${msg}".\nChat starting in <#${channel.id}|${channel.name}>`,
         },
     });
     try {
-        const channelName = await createSlackChannel();
-        const response = await axios(getOptions(channelName));
+        const response = await axios(options);
         console.log('Post message:', response.data);
         return response.data.ts;
     } catch (err) {
@@ -91,7 +101,6 @@ const postInitialMsgToChatRoom = async (msg: string, channel: string): Promise<T
         },
     });
     try {
-        const channelName = await createSlackChannel();
         const response = await axios(options);
         console.log('Post message:', response.data);
         return response.data.ts;
