@@ -1,6 +1,7 @@
 var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+const WebSocket = require('ws');
 var axios = require('axios');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
@@ -25,8 +26,13 @@ type Channel = {
 const initiateChat = async (msg: string) => {
     const channel = await createSlackChannel();
 
+    // relay first chat message to Slack
     notify(msg, channel)
     postInitialMsgToChatRoom(msg, channel.name)
+
+    // establish connection to Slack ws
+    const slackWSUrl = await getSlackWsUrl()
+    connectSlackWs(slackWSUrl)
 }
 
 /**
@@ -102,14 +108,14 @@ const postInitialMsgToChatRoom = async (msg: string, channel: string): Promise<T
     });
     try {
         const response = await axios(options);
-        console.log('Post message:', response.data);
+        console.log('Posted message to Slack ');
         return response.data.ts;
     } catch (err) {
         console.log('Message post failed:', err);
     }
 };
 
-const connectSlackRTM = async () => {
+const getSlackWsUrl = async () => {
     const options: any = {
         url: 'https://slack.com/api/rtm.connect',
         method: 'GET',
@@ -122,7 +128,7 @@ const connectSlackRTM = async () => {
         const response = await axios(options);
         const wsUrl = response.data.url;
 
-        console.log('Connecting to Slack RTM', wsUrl);
+        console.log('Connecting to Slack RTM');
         return wsUrl;
     } catch (err) {
         console.log('Connecting to Slack RTM failed:', err);
@@ -148,4 +154,16 @@ const startSlackRTM = async () => {
         console.log('Starting Slack RTM failed:', err);
     }
 }
-const slackWSUrl = connectSlackRTM()
+
+const connectSlackWs = (url: string) => {
+    const ws = new WebSocket(url);
+
+    ws.on('open', function open() {
+        console.log('Slack ws opened')
+        // ws.send('something');
+    });
+
+    ws.on('message', function incoming(data: string) {
+        console.log('Slack sent:', data);
+    });
+}
