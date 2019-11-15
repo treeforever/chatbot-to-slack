@@ -108,3 +108,44 @@ const postInitialMsgToChatRoom = async (msg: string, channel: string): Promise<T
         console.log('Message post failed:', err);
     }
 };
+
+const connectSlackRTM = async () => {
+    const options: any = {
+        url: 'https://slack.com/api/rtm.connect',
+        method: 'GET',
+        headers: {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
+        }
+    };
+    try {
+        const response = await axios(options);
+        const wsUrl = response.data.url;
+
+        console.log('Connecting to Slack RTM', wsUrl);
+        return wsUrl;
+    } catch (err) {
+        console.log('Connecting to Slack RTM failed:', err);
+    }
+}
+
+const startSlackRTM = async () => {
+    const options: any = {
+        url: 'https://slack.com/api/rtm.start',
+        method: 'GET',
+        headers: {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
+        }
+    };
+    try {
+        const response = await axios(options);
+        const wsUrl = response.data.url;
+
+        console.log('Starting Slack RTM', wsUrl);
+        return wsUrl;
+    } catch (err) {
+        console.log('Starting Slack RTM failed:', err);
+    }
+}
+const slackWSUrl = connectSlackRTM()
