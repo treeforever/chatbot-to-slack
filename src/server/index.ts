@@ -1,8 +1,9 @@
-var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const app = require('express')();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 const WebSocket = require('ws');
-var axios = require('axios');
+const axios = require('axios');
+const { RTMClient, LogLevel } = require('@slack/rtm-api');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
 
@@ -58,7 +59,7 @@ const notify = async (
     });
     try {
         const response = await axios(options);
-        console.log('Post message:', response.data);
+        console.log('Notified');
         return response.data.ts;
     } catch (err) {
         console.log('Message post failed:', err);
@@ -155,7 +156,14 @@ const startSlackRTM = async () => {
     }
 }
 
-const connectSlackWs = (url: string) => {
+// const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
+//     logLevel: LogLevel.INFO
+// });
+
+// rtm.on('message', (event: string) => {
+//     console.log('sent from Slack SDK', event);
+// });
+const connectSlackWs = async (url: string) => {
     const ws = new WebSocket(url);
 
     ws.on('open', function open() {
@@ -163,7 +171,19 @@ const connectSlackWs = (url: string) => {
         // ws.send('something');
     });
 
+    ws.on('close', function close() {
+        console.log('disconnected');
+    });
+
     ws.on('message', function incoming(data: string) {
         console.log('Slack sent:', data);
     });
+
+    ws.on('error', function incoming(data: string) {
+        console.log('Slack sent error:', data);
+    });
+
+    // const { self, team } = await rtm.start();
+
+    // console.log('se', self, team)
 }
