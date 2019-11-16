@@ -1,17 +1,48 @@
 const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const WebSocket = require('ws');
 const axios = require('axios');
 const { RTMClient, LogLevel } = require('@slack/rtm-api');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
 
-io.on('connection', function (socket: any) {
+const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
+    logLevel: LogLevel.INFO
+});
+
+
+io.on('connection', async function (socket: any) {
     console.log('a user connected');
-    socket.on('chat message', function (msg: string) {
-        initiateChat(msg)
+
+    let notifyFirstMessage = true;
+
+    let channel = { id: '', name: '' };
+    socket.on('chat message', async function (msg: string) {
+        if (notifyFirstMessage) {
+            channel = await createSlackChannel();
+            await notify(msg, channel)
+            notifyFirstMessage = false;
+        }
+
+        postMsgToSlackChannel(msg, channel.name)
+
     });
+
+    rtm.on('message', (event: any) => {
+        console.log('sent from Slack SDK', event);
+        // filter to only messages
+        if (event.type === 'message' && !event.subtype && event.text) {
+            const slackMsg = event.text;
+            const sender = event.user;
+
+            // socket.emit(JSON.stringify({slackMsg, sender}))
+        }
+    });
+
+    // connect to Slack RTM to receive events
+    rtm.start()
+
+
 });
 
 http.listen(8080, function () {
@@ -22,18 +53,6 @@ type TimeStamp = string;
 type Channel = {
     id: string,
     name: string
-}
-
-const initiateChat = async (msg: string) => {
-    const channel = await createSlackChannel();
-
-    // relay first chat message to Slack
-    notify(msg, channel)
-    postInitialMsgToChatRoom(msg, channel.name)
-
-    // establish connection to Slack ws
-    const slackWSUrl = await getSlackWsUrl()
-    connectSlackWs(slackWSUrl)
 }
 
 /**
@@ -82,19 +101,21 @@ const createSlackChannel = async () => {
     try {
         const response = await axios(options);
         if (response.data.already_in_channel) {
-            createSlackChannel()
+            await createSlackChannel()
         }
         console.log('Create channel:', randomName);
-        return {
-            name: response.data.channel.name,
-            id: response.data.channel.id
-        };
+        if (response.data.ok) {
+            return {
+                name: response.data.channel.name,
+                id: response.data.channel.id
+            };
+        }
     } catch (err) {
         console.log('Channel creation failed:', err);
     }
 }
 
-const postInitialMsgToChatRoom = async (msg: string, channel: string): Promise<TimeStamp> => {
+const postMsgToSlackChannel = async (msg: string, channel: string): Promise<TimeStamp> => {
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
         method: 'POST',
@@ -134,56 +155,4 @@ const getSlackWsUrl = async () => {
     } catch (err) {
         console.log('Connecting to Slack RTM failed:', err);
     }
-}
-
-const startSlackRTM = async () => {
-    const options: any = {
-        url: 'https://slack.com/api/rtm.start',
-        method: 'GET',
-        headers: {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
-        }
-    };
-    try {
-        const response = await axios(options);
-        const wsUrl = response.data.url;
-
-        console.log('Starting Slack RTM', wsUrl);
-        return wsUrl;
-    } catch (err) {
-        console.log('Starting Slack RTM failed:', err);
-    }
-}
-
-// const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
-//     logLevel: LogLevel.INFO
-// });
-
-// rtm.on('message', (event: string) => {
-//     console.log('sent from Slack SDK', event);
-// });
-const connectSlackWs = async (url: string) => {
-    const ws = new WebSocket(url);
-
-    ws.on('open', function open() {
-        console.log('Slack ws opened')
-        // ws.send('something');
-    });
-
-    ws.on('close', function close() {
-        console.log('disconnected');
-    });
-
-    ws.on('message', function incoming(data: string) {
-        console.log('Slack sent:', data);
-    });
-
-    ws.on('error', function incoming(data: string) {
-        console.log('Slack sent error:', data);
-    });
-
-    // const { self, team } = await rtm.start();
-
-    // console.log('se', self, team)
 }

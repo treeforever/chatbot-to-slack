@@ -15,13 +15,16 @@ export default () => {
         setInputValue('');
         setMessages([...messages, inputValue])
         socket.emit('chat message', inputValue)
+        socket.on('slack message', () => {
+
+        })
     }
     return (
         <>
             <ul id="messages">
-                {messages.map((m, index) => 
+                {messages.map((m, index) =>
                     <li key={index + m.slice(0, 3)}>{m}</li>
-                    )}
+                )}
             </ul>
             <form action="" onSubmit={onSubmit}>
                 <input id="m" onChange={onChange} value={inputValue} /><button>Send</button>
