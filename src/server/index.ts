@@ -6,7 +6,7 @@ const { RTMClient, LogLevel } = require('@slack/rtm-api');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
 
-const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
+const rtm = new RTMClient(process.env.SLACK_OAUTH_TOKEN, {
     logLevel: LogLevel.INFO
 });
 
@@ -20,16 +20,24 @@ io.on('connection', async function (socket: any) {
     socket.on('chat message', async function (msg: string) {
         if (notifyFirstMessage) {
             channel = await createSlackChannel();
-            await notify(msg, channel)
+            await notify(msg, channel);
             notifyFirstMessage = false;
         }
 
+        console.log('got channel name', channel.name)
         postMsgToSlackChannel(msg, channel.name)
 
     });
 
+
+    // connect to Slack RTM to receive events
+    try {
+        await rtm.start()
+    } catch (err) {
+        console.error('Starting rtm failed', err)
+    }
     rtm.on('message', (event: any) => {
-        console.log('sent from Slack SDK', event);
+        console.log('sent from Slack SDK', event.text);
         // filter to only messages
         if (event.type === 'message' && !event.subtype && event.text) {
             const slackMsg = event.text;
@@ -38,9 +46,6 @@ io.on('connection', async function (socket: any) {
             // socket.emit(JSON.stringify({slackMsg, sender}))
         }
     });
-
-    // connect to Slack RTM to receive events
-    rtm.start()
 
 
 });
@@ -63,7 +68,7 @@ type Channel = {
 const notify = async (
     msg: string,
     channel: Channel
-): Promise<TimeStamp> => {
+) => {
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
         method: 'POST',
@@ -77,9 +82,8 @@ const notify = async (
         },
     });
     try {
-        const response = await axios(options);
+        await axios(options);
         console.log('Notified');
-        return response.data.ts;
     } catch (err) {
         console.log('Message post failed:', err);
     }
