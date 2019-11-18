@@ -6,44 +6,44 @@ const { RTMClient, LogLevel } = require('@slack/rtm-api');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
 
-const rtm = new RTMClient(process.env.SLACK_OAUTH_TOKEN, {
+const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
     logLevel: LogLevel.INFO
 });
 
 
 io.on('connection', async function (socket: any) {
     console.log('a user connected');
-
     let notifyFirstMessage = true;
+    let threadTs = '';
 
-    let channel = { id: '', name: '' };
     socket.on('chat message', async function (msg: string) {
         if (notifyFirstMessage) {
-            channel = await createSlackChannel();
-            await notify(msg, channel);
+            threadTs = await initiateChat(msg);
             notifyFirstMessage = false;
+        } else {
+            postMsgToSlackChannel(msg, threadTs)
         }
-
-        console.log('got channel name', channel.name)
-        postMsgToSlackChannel(msg, channel.name)
 
     });
 
-
     // connect to Slack RTM to receive events
-    try {
-        await rtm.start()
-    } catch (err) {
-        console.error('Starting rtm failed', err)
+    console.log(rtm.connected)
+    if (!rtm.connected) {
+        try {
+            await rtm.start()
+        } catch (err) {
+            console.error('Starting rtm failed', err)
+        }
     }
+
     rtm.on('message', (event: any) => {
-        console.log('sent from Slack SDK', event.text);
+        console.log('sent from Slack SDK', event);
         // filter to only messages
-        if (event.type === 'message' && !event.subtype && event.text) {
-            const slackMsg = event.text;
+        if (event.thread_ts === threadTs) {
+            const reply = event.text;
             const sender = event.user;
 
-            // socket.emit(JSON.stringify({slackMsg, sender}))
+            socket.emit(JSON.stringify({ reply, sender }))
         }
     });
 
@@ -54,20 +54,46 @@ http.listen(8080, function () {
     console.log('listening on *:8080');
 });
 
+io.on('disconnection', () => {
+    console.log('Chatbot disconnected')
+})
+
 type TimeStamp = string;
 type Channel = {
     id: string,
     name: string
 }
 
+const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<TimeStamp> => {
+    const options = ({
+        url: 'https://slack.com/api/chat.postMessage',
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json;charset=utf-8',
+            Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
+        },
+        data: {
+            channel: 'chatty-live-chat',
+            text: msg,
+            thread_ts: threadTs
+        },
+    });
+    try {
+        const response = await axios(options);
+        console.log('Posted message to Slack ');
+        return response.data.ts;
+    } catch (err) {
+        console.log('Message post failed:', err);
+    }
+};
+
 /**
  * Notify everyone in #chatty-live-chat that a channel is created to facilitate a new conversation from the website
  * @param msg 
  * @param channel 
  */
-const notify = async (
+const initiateChat = async (
     msg: string,
-    channel: Channel
 ) => {
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
@@ -78,12 +104,13 @@ const notify = async (
         },
         data: {
             channel: 'chatty-live-chat',
-            text: `Someone started a conversation: "${msg}".\nChat starting in <#${channel.id}|${channel.name}>`,
+            text: `Someone started a conversation: "${msg}".\nChat starting in the threads`,
         },
     });
     try {
-        await axios(options);
-        console.log('Notified');
+        const response = await axios(options);
+        console.log('Notified', response.data);
+        return response.data.ts
     } catch (err) {
         console.log('Message post failed:', err);
     }
@@ -118,28 +145,6 @@ const createSlackChannel = async () => {
         console.log('Channel creation failed:', err);
     }
 }
-
-const postMsgToSlackChannel = async (msg: string, channel: string): Promise<TimeStamp> => {
-    const options = ({
-        url: 'https://slack.com/api/chat.postMessage',
-        method: 'POST',
-        headers: {
-            'Content-type': 'application/json;charset=utf-8',
-            Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
-        },
-        data: {
-            channel,
-            text: msg,
-        },
-    });
-    try {
-        const response = await axios(options);
-        console.log('Posted message to Slack ');
-        return response.data.ts;
-    } catch (err) {
-        console.log('Message post failed:', err);
-    }
-};
 
 const getSlackWsUrl = async () => {
     const options: any = {
