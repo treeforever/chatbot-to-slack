@@ -41,10 +41,10 @@ io.on('connection', async function (socket: any) {
 
         // filter to only replies and sent by users that are not Chatty
         if (event.thread_ts === threadTs && event.username !== 'Chatty') {
-            const reply = event.text;
+            const text = event.text;
             const sender = event.user;
 
-            socket.emit('slack message', { reply, sender })
+            socket.emit('slack message', { text, sender })
         }
     });
 });

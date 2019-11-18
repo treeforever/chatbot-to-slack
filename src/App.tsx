@@ -3,41 +3,35 @@ import { useState, useCallback, useEffect } from "react";
 const io = require('socket.io-client');
 const socket = io('http://localhost:8080');
 
-type SlackMessage = {
-    reply: string,
+type Message = {
+    text: string,
     sender: string
 }
 
 export default () => {
-    const [inputValue, setInputValue] = useState('');
-    const [messages, setMessages] = useState([])
+    const [inputValue, setInputValue] = useState<string>('');
+    const [messages, setMessages] = useState<Message[]>([])
     const onChange = useCallback((e: any) => {
         setInputValue(e.target.value)
     }, [])
-    const addMessage = useCallback((msg: string) => {
-        console.log('when is this updated', messages)
-        setMessages([...messages, msg])
-    }, [messages])
+
     useEffect(() => {
-        socket.on('slack message', (data: SlackMessage) => {
-            console.log('slack msg', data)
-            setMessages((messages) => [...messages, data.reply])
-            // addMessage(data.reply)
+        socket.on('slack message', (data: Message) => {
+            setMessages((messages) => [...messages, data])
         })
     }, [])
-    console.log('outer', messages)
 
     const onSubmit = (e: any) => {
         e.preventDefault();
-        setInputValue('');
-        setMessages((messages) => [...messages, inputValue])
+        setMessages((messages) => [...messages, { sender: 'me', text: inputValue }])
         socket.emit('browser message', inputValue)
+        setInputValue('');
     }
     return (
         <>
             <ul id="messages">
                 {messages.map((m, index) =>
-                    <li key={index + m.slice(0, 3)}>{m}</li>
+                    <li key={index + m.text.slice(0, 3)}>{m.sender}: {m.text}</li>
                 )}
             </ul>
             <form action="" onSubmit={onSubmit}>
