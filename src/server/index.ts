@@ -36,15 +36,14 @@ io.on('connection', async function (socket: any) {
         }
     }
 
-    rtm.on('message', (event: any) => {
+    rtm.on('message', async (event: any) => {
         console.log('sent from Slack SDK', event);
 
         // filter to only replies and sent by users that are not Chatty
         if (event.thread_ts === threadTs && event.username !== 'Chatty') {
-            const text = event.text;
-            const sender = event.user;
-
-            socket.emit('slack message', { text, sender })
+            const { text, user } = event;
+            const name = await getUserName(user);
+            socket.emit('slack message', { text, name })
         }
     });
 });
@@ -162,5 +161,26 @@ const getSlackWsUrl = async () => {
         return wsUrl;
     } catch (err) {
         console.log('Connecting to Slack RTM failed:', err);
+    }
+}
+
+const getUserName = async (user: string) => {
+    const options: any = {
+        url: `https://slack.com/api/users.info?user=${user}`,
+        method: 'GET',
+        headers: {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
+        },
+    };
+    try {
+        const response = await axios(options);
+        if (response.data.ok) {
+            return response.data.user.profile.real_name_normalized
+        } else {
+            console.log('Getting username not ok')
+        }
+    } catch (err) {
+        console.log('Getting username failed', err);
     }
 }

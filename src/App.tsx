@@ -5,7 +5,7 @@ const socket = io('http://localhost:8080');
 
 type Message = {
     text: string,
-    sender: string
+    name: string
 }
 
 export default () => {
@@ -23,7 +23,7 @@ export default () => {
 
     const onSubmit = (e: any) => {
         e.preventDefault();
-        setMessages((messages) => [...messages, { sender: 'me', text: inputValue }])
+        setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
         socket.emit('browser message', inputValue)
         setInputValue('');
     }
@@ -31,7 +31,7 @@ export default () => {
         <>
             <ul id="messages">
                 {messages.map((m, index) =>
-                    <li key={index + m.text.slice(0, 3)}>{m.sender}: {m.text}</li>
+                    <li key={index + m.text.slice(0, 3)}>{m.name}: {m.text}</li>
                 )}
             </ul>
             <form action="" onSubmit={onSubmit}>
