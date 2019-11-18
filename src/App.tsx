@@ -31,6 +31,7 @@ export default () => {
 
     const onSubmit = (e: any) => {
         e.preventDefault();
+        if (inputValue === '') return;
         setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
         socket.emit('browser message', inputValue)
         setInputValue('');
