@@ -42,12 +42,47 @@
             padding: 0;
         }
 
-        #messages li {
-            padding: 5px 10px;
+        .my-message {
+            background: #f5f6f7;
+            position: relative;
+            border-radius: .4em;
+            padding: 1em;
         }
 
-        #messages li:nth-child(odd) {
-            background: #eee;
+        .my-message:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 12px solid transparent;
+            border-right-color: #f5f6f7;
+            border-left: 0;
+            margin-top: -12px;
+            margin-left: -12px;
+        }
+
+        .other-message {
+            position: relative;
+            right: 0;
+            background: #00aabb;
+            border-radius: .4em;
+            padding: 1em;
+        }
+
+        .other-message:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 12px solid transparent;
+            border-left-color: #00aabb;
+            border-right: 0;
+            margin-top: -12px;
+            margin-right: -12px;
         }
     </style>
 </head>

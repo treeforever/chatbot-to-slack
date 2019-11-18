@@ -8,6 +8,14 @@ type Message = {
     name: string
 }
 
+const listStyle = (isLeft: boolean) => ({
+    padding: '5px 10px',
+    marginTop: '.5em',
+    display: 'flex',
+    justifyContent: isLeft ? 'flex-start' : 'flex-end'
+})
+
+
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -31,7 +39,12 @@ export default () => {
         <>
             <ul id="messages">
                 {messages.map((m, index) =>
-                    <li key={index + m.text.slice(0, 3)}>{m.name}: {m.text}</li>
+                    <li
+                        key={index + m.text.slice(0, 3)}
+                        style={listStyle(m.name === 'me')}
+                    >
+                        <span className={m.name === 'me' ? 'my-message' : 'other-message'}>{m.name !== 'me' ? `${m.name}: ` : ''}{m.text}</span>
+                    </li>
                 )}
             </ul>
             <form action="" onSubmit={onSubmit}>
