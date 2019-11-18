@@ -16,7 +16,7 @@ io.on('connection', async function (socket: any) {
     let notifyFirstMessage = true;
     let threadTs = '';
 
-    socket.on('chat message', async function (msg: string) {
+    socket.on('browser message', async function (msg: string) {
         if (notifyFirstMessage) {
             threadTs = await initiateChat(msg);
             notifyFirstMessage = false;
@@ -38,16 +38,15 @@ io.on('connection', async function (socket: any) {
 
     rtm.on('message', (event: any) => {
         console.log('sent from Slack SDK', event);
-        // filter to only messages
-        if (event.thread_ts === threadTs) {
+
+        // filter to only replies and sent by users that are not Chatty
+        if (event.thread_ts === threadTs && event.username !== 'Chatty') {
             const reply = event.text;
             const sender = event.user;
 
-            socket.emit(JSON.stringify({ reply, sender }))
+            socket.emit('slack message', { reply, sender })
         }
     });
-
-
 });
 
 http.listen(8080, function () {
