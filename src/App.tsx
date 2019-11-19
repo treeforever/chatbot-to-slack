@@ -13,13 +13,14 @@ const listStyle = (isMe: boolean) => ({
     padding: '5px 10px',
     marginTop: '.5em',
     display: 'flex',
-    justifyContent: isMe ? 'flex-end' : 'flex-start'
+    justifyContent: isMe ? 'flex-end' : 'flex-start',
 })
 const messageStyle = (isMe: boolean) => ({
     position: 'relative',
     borderRadius: '.4em',
     padding: '1em',
     background: isMe ? blue : grey,
+    maxWidth: '80%',
     '&:after': {
         content: '',
         position: 'absolute',
