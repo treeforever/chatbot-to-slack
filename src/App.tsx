@@ -69,12 +69,12 @@ const ulStyle = {
     overflowY: 'auto',
     height: '90%',
 } as CSSProperties
-const logoStyle = (isOpen: boolean) => ({
+const logoStyle = (isOpen: boolean, newMessage: boolean) => ({
     position: 'fixed',
     bottom: 0,
     right: 0,
     zIndex: 9999,
-    background: isOpen ? darkBlue : blue,
+    background: newMessage ? 'pink' : (isOpen ? darkBlue : blue),
     width: '5em',
     height: '5em',
     borderRadius: '100%',
@@ -91,19 +91,20 @@ const containerStyle = {
 } as CSSProperties
 
 
-const ChatLogo = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: Function }) =>
-    <button style={logoStyle(isOpen)} onClick={() => setIsOpen(!isOpen)} />
+const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
+    <button style={logoStyle(isOpen, newMessage)} onClick={() => clickHandler(!isOpen)} />
 
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
     const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [readMark, setReadMark] = useState<number>(0);
+    const [showNewMessageDot, setNewMessageDot] = useState<boolean>(false);
     const onChange = useCallback((e: any) => {
         setInputValue(e.target.value)
     }, [])
 
     const refMessages = useRef(null);
-
 
     useEffect(() => {
         socket.on('slack message', (data: Message) => {
@@ -123,6 +124,30 @@ export default () => {
 
         scrollToLatestMessage()
     }, [messages, isOpen])
+
+    useEffect(() => {
+        if (isOpen) {
+            setReadMark(messages.length)
+        }
+    }, [messages])
+
+    useEffect(() => {
+        if (!isOpen && readMark !== messages.length) {
+            setNewMessageDot(true)
+        }
+    }, [messages, readMark, isOpen])
+
+
+    const resetNewMessageDotUponOpen = () => {
+        if (!isOpen) {
+            setNewMessageDot(false)
+        }
+    }
+
+    const clickHandler = () => {
+        resetNewMessageDotUponOpen();
+        setIsOpen(!isOpen);
+    }
 
     const onSubmit = (e: any) => {
         e.preventDefault();
@@ -155,7 +180,7 @@ export default () => {
                         <button style={buttonStyle}>Send</button>
                     </form>
                 </div>)}
-            <ChatLogo isOpen={isOpen} setIsOpen={setIsOpen} />
+            <ChatLogo isOpen={isOpen} clickHandler={clickHandler} newMessage={showNewMessageDot} />
         </>
     )
 }
