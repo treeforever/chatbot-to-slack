@@ -10,21 +10,24 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
     logLevel: LogLevel.INFO
 });
 
-
-io.on('connection', async function (socket: any) {
+io.on('connection', async (socket: any) => {
     console.log('a user connected');
     let notifyFirstMessage = true;
     let threadTs = '';
 
-    socket.on('browser message', async function (msg: string) {
+    socket.on('browser message', async (msg: string) => {
         if (notifyFirstMessage) {
             threadTs = await initiateChat(msg);
+            socket.emit('thread ts', threadTs)
             notifyFirstMessage = false;
         } else {
             postMsgToSlackChannel(msg, threadTs)
         }
-
     });
+
+    socket.on('retrieve messages by thread ts', (threadTs: string) => {
+        console.log('tttttttt', threadTs)
+    })
 
     // connect to Slack RTM to receive events
     console.log(rtm.connected)

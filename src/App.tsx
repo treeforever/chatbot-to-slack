@@ -94,6 +94,9 @@ const containerStyle = {
 const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
     <button style={logoStyle(isOpen, newMessage)} onClick={() => clickHandler(!isOpen)} />
 
+const COOKIE_KEY = 'chatty_thread_ts'
+const containChattyThreadTs = (cookie: string) => cookie.includes(COOKIE_KEY)
+const extractThreadTs = (cookie: string) => cookie.split(';').filter((item) => item.includes(COOKIE_KEY))[0]
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -107,8 +110,14 @@ export default () => {
     const refMessages = useRef(null);
 
     useEffect(() => {
+        if (containChattyThreadTs(document.cookie)) {
+            socket.emit('retrieve messages by thread ts', extractThreadTs(document.cookie))
+        }
         socket.on('slack message', (data: Message) => {
             setMessages((messages) => [...messages, data])
+        })
+        socket.on('thread ts', (ts: string) => {
+            document.cookie = `chatty_thread_ts=${ts}`
         })
     }, [])
 
