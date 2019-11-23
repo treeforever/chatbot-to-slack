@@ -66,6 +66,7 @@ const ulStyle = {
     listStyleType: 'none',
     margin: 0,
     padding: 0,
+    overflowX: 'hidden',
     overflowY: 'auto',
     height: '90%',
 } as CSSProperties
@@ -96,7 +97,11 @@ const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, click
 
 const COOKIE_KEY = 'chatty_thread_ts'
 const containChattyThreadTs = (cookie: string) => cookie.includes(COOKIE_KEY)
-const extractThreadTs = (cookie: string) => cookie.split(';').filter((item) => item.includes(COOKIE_KEY))[0]
+const extractThreadTs = (cookie: string) => {
+    const matchedCookie = cookie.split(';').filter((item) => item.includes(COOKIE_KEY))
+    const ts = matchedCookie[0].trim().slice(COOKIE_KEY.length + 1);
+    return ts;
+}
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -117,7 +122,7 @@ export default () => {
             setMessages((messages) => [...messages, data])
         })
         socket.on('thread ts', (ts: string) => {
-            document.cookie = `chatty_thread_ts=${ts}`
+            document.cookie = `${COOKIE_KEY}=${ts}`
         })
     }, [])
 

@@ -15,19 +15,24 @@ io.on('connection', async (socket: any) => {
     let notifyFirstMessage = true;
     let threadTs = '';
 
+    socket.on('retrieve messages by thread ts', (ts: string) => {
+        threadTs = ts;
+    })
+
     socket.on('browser message', async (msg: string) => {
         if (notifyFirstMessage) {
-            threadTs = await initiateChat(msg);
-            socket.emit('thread ts', threadTs)
-            notifyFirstMessage = false;
+            if (threadTs) {
+                postMsgToSlackChannel(msg, threadTs)
+            } else {
+                threadTs = await initiateChat(msg);
+                socket.emit('thread ts', threadTs)
+                notifyFirstMessage = false;
+            }
         } else {
             postMsgToSlackChannel(msg, threadTs)
         }
     });
 
-    socket.on('retrieve messages by thread ts', (threadTs: string) => {
-        console.log('tttttttt', threadTs)
-    })
 
     // connect to Slack RTM to receive events
     console.log(rtm.connected)
