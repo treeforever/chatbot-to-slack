@@ -33,6 +33,14 @@ io.on('connection', async (socket: any) => {
         }
     });
 
+    socket.on('disconnect', (reason: string) => {
+        if (threadTs && reason === 'transport close') {
+            postMsgToSlackChannel('[user disconnected]', threadTs)
+
+        }
+        console.log('Chatbot disconnected', reason)
+    })
+
 
     // connect to Slack RTM to receive events
     console.log(rtm.connected)
@@ -59,10 +67,6 @@ io.on('connection', async (socket: any) => {
 http.listen(8080, function () {
     console.log('listening on *:8080');
 });
-
-io.on('disconnection', () => {
-    console.log('Chatbot disconnected')
-})
 
 type TimeStamp = string;
 type Channel = {
