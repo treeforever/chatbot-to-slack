@@ -96,12 +96,14 @@ const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, click
     <button style={logoStyle(isOpen, newMessage)} onClick={() => clickHandler(!isOpen)} />
 
 const COOKIE_KEY = 'chatty_thread_ts'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 2 // two days
 const containChattyThreadTs = (cookie: string) => cookie.includes(COOKIE_KEY)
 const extractThreadTs = (cookie: string) => {
     const matchedCookie = cookie.split(';').filter((item) => item.includes(COOKIE_KEY))
     const ts = matchedCookie[0].trim().slice(COOKIE_KEY.length + 1);
     return ts;
 }
+const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-age=${COOKIE_MAX_AGE}`
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -122,7 +124,7 @@ export default () => {
             setMessages((messages) => [...messages, data])
         })
         socket.on('thread ts', (ts: string) => {
-            document.cookie = `${COOKIE_KEY}=${ts}`
+            writeCookie(ts)
         })
     }, [])
 
