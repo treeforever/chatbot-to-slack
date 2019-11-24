@@ -137,13 +137,11 @@ export default () => {
         }
 
         scrollToLatestMessage()
-    }, [messages, isOpen])
 
-    useEffect(() => {
         if (isOpen) {
             setReadMark(messages.length)
         }
-    }, [messages])
+    }, [messages, isOpen])
 
     useEffect(() => {
         if (!isOpen && readMark !== messages.length) {
