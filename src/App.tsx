@@ -110,6 +110,7 @@ export default () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [readMark, setReadMark] = useState<number>(0);
     const [showNewMessageDot, setNewMessageDot] = useState<boolean>(false);
+    const [ts, setTs] = useState<string>(null)
     const onChange = useCallback((e: any) => {
         setInputValue(e.target.value)
     }, [])
@@ -118,7 +119,9 @@ export default () => {
 
     useEffect(() => {
         if (containChattyThreadTs(document.cookie)) {
-            socket.emit('retrieve messages by thread ts', extractThreadTs(document.cookie))
+            const threadTs = extractThreadTs(document.cookie)
+            setTs(threadTs);
+            socket.emit('retrieve messages by thread ts', threadTs)
             socket.on('retrieve conversation', (conversation: Message[]) => {
                 setMessages(conversation);
                 setReadMark(conversation.length)
@@ -129,7 +132,8 @@ export default () => {
             setMessages((messages) => [...messages, data])
         })
         socket.on('thread ts', (ts: string) => {
-            writeCookie(ts)
+            writeCookie(ts);
+            setTs(ts);
         })
     }, [])
 
@@ -169,6 +173,7 @@ export default () => {
         setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
         socket.emit('browser message', inputValue)
         setInputValue('');
+        writeCookie(ts)
     }
     return (
         <>
