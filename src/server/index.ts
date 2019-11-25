@@ -22,6 +22,7 @@ io.on('connection', async (socket: any) => {
         threadTs = ts;
         const chattyLiveChat = 'CQ85K0E0Z'
         const conversation = await retrieveConversation(chattyLiveChat, threadTs)
+        socket.emit('retrieve conversation', conversation)
     })
 
     socket.on('browser message', async (msg: string) => {
@@ -222,8 +223,8 @@ const retrieveConversation = async (channel: string, ts: string) => {
     try {
         const response = await axios(options);
         if (response.data.ok) {
-            rebuildConversationForUser(response.data.messages)
             console.log('getting back conversation')
+            return rebuildConversationForUser(response.data.messages)
         } else {
             console.log('getting back conversation not ok', response.data.error)
         }

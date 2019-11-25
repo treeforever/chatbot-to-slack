@@ -119,6 +119,11 @@ export default () => {
     useEffect(() => {
         if (containChattyThreadTs(document.cookie)) {
             socket.emit('retrieve messages by thread ts', extractThreadTs(document.cookie))
+            socket.on('retrieve conversation', (conversation: Message[]) => {
+                setMessages(conversation);
+                setReadMark(conversation.length)
+                setNewMessageDot(false)
+            })
         }
         socket.on('slack message', (data: Message) => {
             setMessages((messages) => [...messages, data])
@@ -151,15 +156,10 @@ export default () => {
         }
     }, [messages, readMark, isOpen])
 
-
-    const resetNewMessageDotUponOpen = () => {
+    const clickHandler = () => {
         if (!isOpen) {
             setNewMessageDot(false)
         }
-    }
-
-    const clickHandler = () => {
-        resetNewMessageDotUponOpen();
         setIsOpen(!isOpen);
     }
 
