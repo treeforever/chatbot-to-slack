@@ -104,6 +104,11 @@ const extractThreadTs = (cookie: string) => {
     return ts;
 }
 const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-age=${COOKIE_MAX_AGE}`
+const isOffline = (start: number, end: number) => {
+    const now = new Date();
+    const UTCHours = now.getUTCHours()
+    return UTCHours >= start || UTCHours <= end
+}
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -194,10 +199,15 @@ export default () => {
                             </li>
                         )}
                     </ul>
-                    <form action="" onSubmit={onSubmit} style={formStyle}>
-                        <input id="m" onChange={onChange} value={inputValue} style={inputStyle} autoFocus />
-                        <button style={buttonStyle}>Send</button>
-                    </form>
+                    {isOffline(1, 13) ?
+                        (<div>
+                            <span>Sorry, support is offline now. Please send us an email. we will get back to you within 24 hours!</span>
+                        </div>)
+                        :
+                        (<form action="" onSubmit={onSubmit} style={formStyle}>
+                            <input id="m" onChange={onChange} value={inputValue} style={inputStyle} autoFocus />
+                            <button style={buttonStyle}>Send</button>
+                        </form>)}
                 </div>)}
             <ChatLogo isOpen={isOpen} clickHandler={clickHandler} newMessage={showNewMessageDot} />
         </>
