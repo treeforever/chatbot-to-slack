@@ -109,6 +109,44 @@ const isOffline = (start: number, end: number) => {
     const UTCHours = now.getUTCHours()
     return UTCHours >= start || UTCHours <= end
 }
+
+const OfflineForm = () => {
+    const [name, setName] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+    const [message, setMessage] = useState<string>('');
+
+
+    const onSubmit = (e: any) => {
+        e.preventDefault();
+        if (name.trim() === '' || email.trim() === '' || email.trim() === '') return;
+        socket.emit('offline message', { name, email, message })
+        setMessage('')
+    }
+
+    return (
+        <div>
+            <h3>leave a message</h3>
+            <span>Sorry, support is offline now. Please send us an email. we will get back to you within 24 hours!</span>
+            <form id="offline-form" onSubmit={onSubmit}>
+                <label>Name
+                    <input type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
+                </label>
+                <br />
+                <label>email
+                    <input type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
+                </label>
+                <br />
+                <label>message
+                    <input type="text" name="message" size={2000} value={message} onChange={(e: any) => setMessage(e.target.value)} />
+                </label>
+                <input type="submit" value="send" />
+            </form>
+        </div>
+    )
+
+}
+
+
 export default () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([])
@@ -174,41 +212,46 @@ export default () => {
 
     const onSubmit = (e: any) => {
         e.preventDefault();
-        if (inputValue === '') return;
+        if (inputValue.trim() === '') return;
         setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
         socket.emit('browser message', inputValue)
         setInputValue('');
         writeCookie(ts)
     }
+
+    console.log('is off', isOffline(1, 13))
     return (
         <>
             {isOpen &&
-                (<div id="container" style={containerStyle}>
-                    <ul id="messages" style={ulStyle} ref={refMessages}>
-                        {messages.map((m, index) =>
-                            <li
-                                key={index + m.text.slice(0, 3)}
-                                style={listStyle(m.name === 'me')}
-                            >
-                                <span
-                                    className={m.name === 'me' ? 'my-message' : 'other-message'}
-                                    style={messageStyle(m.name === 'me')}
-                                >
-                                    {m.name !== 'me' ? `${m.name}: ` : ''}{m.text}
-                                </span>
-                            </li>
-                        )}
-                    </ul>
+                <div id="container" style={containerStyle}>
                     {isOffline(1, 13) ?
-                        (<div>
-                            <span>Sorry, support is offline now. Please send us an email. we will get back to you within 24 hours!</span>
-                        </div>)
+                        <OfflineForm />
                         :
-                        (<form action="" onSubmit={onSubmit} style={formStyle}>
-                            <input id="m" onChange={onChange} value={inputValue} style={inputStyle} autoFocus />
-                            <button style={buttonStyle}>Send</button>
-                        </form>)}
-                </div>)}
+                        (
+                            <>
+                                <ul id="messages" style={ulStyle} ref={refMessages}>
+                                    {messages.map((m, index) =>
+                                        <li
+                                            key={index + m.text.slice(0, 3)}
+                                            style={listStyle(m.name === 'me')}
+                                        >
+                                            <span
+                                                className={m.name === 'me' ? 'my-message' : 'other-message'}
+                                                style={messageStyle(m.name === 'me')}
+                                            >
+                                                {m.name !== 'me' ? `${m.name}: ` : ''}{m.text}
+                                            </span>
+                                        </li>
+                                    )}
+                                </ul>
+                                <form action="" onSubmit={onSubmit} style={formStyle}>
+                                    <input onChange={onChange} value={inputValue} style={inputStyle} autoFocus />
+                                    <button style={buttonStyle}>Send</button>
+                                </form>
+                            </>
+                        )}
+                </div>
+            })
             <ChatLogo isOpen={isOpen} clickHandler={clickHandler} newMessage={showNewMessageDot} />
         </>
     )

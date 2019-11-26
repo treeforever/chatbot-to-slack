@@ -39,6 +39,10 @@ io.on('connection', async (socket: any) => {
         }
     });
 
+    socket.on('offline message', (msg: string) => {
+        console.log('offline mmmmm', msg)
+    })
+
     socket.on('disconnect', (reason: string) => {
         if (threadTs && reason === 'transport close') {
             postMsgToSlackChannel(disconnectAnnouncement, threadTs)
