@@ -12,6 +12,7 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
 });
 
 const disconnectAnnouncement = '[user disconnected]';
+let lastMsgIsDisconnect = false;
 
 io.on('connection', async (socket: any) => {
     console.log('a user connected');
@@ -29,13 +30,16 @@ io.on('connection', async (socket: any) => {
         if (notifyFirstMessage) {
             if (threadTs) {
                 postMsgToSlackChannel(msg, threadTs)
+                lastMsgIsDisconnect = false;
             } else {
                 threadTs = await initiateChat(msg);
                 socket.emit('thread ts', threadTs)
                 notifyFirstMessage = false;
+                lastMsgIsDisconnect = false;
             }
         } else {
             postMsgToSlackChannel(msg, threadTs)
+            lastMsgIsDisconnect = false;
         }
     });
 
@@ -44,9 +48,9 @@ io.on('connection', async (socket: any) => {
     })
 
     socket.on('disconnect', (reason: string) => {
-        if (threadTs && reason === 'transport close') {
+        if (threadTs && reason === 'transport close' && !lastMsgIsDisconnect) {
             postMsgToSlackChannel(disconnectAnnouncement, threadTs)
-
+            lastMsgIsDisconnect = true;
         }
         console.log('Chatbot disconnected', reason)
     })
@@ -111,7 +115,6 @@ const openingMessageStart = 'Someone started a conversation: \n>'
 const slackReturnedOpeningMessageStart = 'Someone started a conversation: \n&gt;'
 const openingMessageEnd = '\nChat starting in the threads'
 const openingMessage = (msg: string) => `${openingMessageStart}${msg}${openingMessageEnd}`
-
 
 /**
  * Notify everyone in #chatty-live-chat that a channel is created to facilitate a new conversation from the website
@@ -187,6 +190,7 @@ const retrieveConversation = async (channel: string, ts: string) => {
         console.log('Getting back conversation failed', err);
     }
 }
+
 type Reply = { text: string, username?: string, user: string }
 const rebuildConversationForUser = async (messages: any) => {
     const parentMsg = messages[0].text

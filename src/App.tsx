@@ -255,8 +255,7 @@ export default () => {
                             </>
                         )}
                 </div>
-            })
+            }
             <ChatLogo isOpen={isOpen} clickHandler={clickHandler} newMessage={showNewMessageDot} />
-        </>
-    )
+        </>)
 }
