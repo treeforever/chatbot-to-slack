@@ -107,7 +107,11 @@ const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-
 const isOffline = (start: number, end: number) => {
     const now = new Date();
     const UTCHours = now.getUTCHours()
-    return UTCHours >= start || UTCHours <= end
+    if (start < end) {
+        return UTCHours >= start && UTCHours <= end
+    } else {
+        return UTCHours >= start || UTCHours <= end
+    }
 }
 
 const OfflineForm = () => {
