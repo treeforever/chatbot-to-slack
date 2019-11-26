@@ -13,7 +13,7 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
 
 const disconnectAnnouncement = '[user disconnected]';
 let lastMsgIsDisconnect = false;
-
+const offlineMsgAnnouncement = '_User sent an offline message._'
 io.on('connection', async (socket: any) => {
     console.log('a user connected');
     let notifyFirstMessage = true;
@@ -44,7 +44,7 @@ io.on('connection', async (socket: any) => {
     });
 
     socket.on('offline message', ({ name, email, message }: { name: string, email: string, message: string }) => {
-        postMsgToSlackChannel(`_User sent an offline message._\nName: *${name}*, email: *${email}*\n>${message}`, threadTs)
+        postMsgToSlackChannel(`${offlineMsgAnnouncement}\nName: *${name}*, email: *${email}*\n>${message}`, threadTs)
     })
 
     socket.on('disconnect', (reason: string) => {
@@ -206,10 +206,20 @@ const rebuildConversationForUser = async (messages: any) => {
     const userNamesMap: { [key: string]: string } = await getUserNamesMap();
 
     const replies = messages.slice(1).filter((msg: Reply) => msg.text !== disconnectAnnouncement)
-        .map((msg: Reply) => ({
-            text: msg.text,
-            name: msg.username === 'Chatty' ? 'me' : userNamesMap[msg.user]
-        }))
+        .map((msg: Reply) => {
+            const isOffline = Boolean(msg.text.match(offlineMsgAnnouncement))
+            return {
+                text: isOffline ? findOfflineMsg(msg.text) : msg.text,
+                name: msg.username === 'Chatty' ? 'me' : userNamesMap[msg.user],
+                ...(isOffline ? { offline: true } : {})
+            }
+        })
+
 
     return [{ text: firstMsg, name: 'me' }, ...replies];
+}
+const findOfflineMsg = (text: string) => {
+    const tag = '&gt;'
+    const index = text.search(tag);
+    return text.slice(index + tag.length)
 }

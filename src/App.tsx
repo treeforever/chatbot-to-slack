@@ -223,7 +223,6 @@ export default () => {
         writeCookie(ts)
     }
 
-    console.log('is off', isOffline(1, 13))
     return (
         <>
             {isOpen &&
