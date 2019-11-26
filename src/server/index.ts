@@ -39,8 +39,8 @@ io.on('connection', async (socket: any) => {
         }
     });
 
-    socket.on('offline message', (msg: string) => {
-        console.log('offline mmmmm', msg)
+    socket.on('offline message', ({ name, email, message }: { name: string, email: string, message: string }) => {
+        postMsgToSlackChannel(`_User sent an offline message._\nName: *${name}*, email: *${email}*\n>${message}`, threadTs)
     })
 
     socket.on('disconnect', (reason: string) => {
@@ -141,56 +141,6 @@ const initiateChat = async (
         console.log('Message post failed:', err);
     }
 };
-
-const createSlackChannel = async () => {
-    const randomName = generateRandomChannelName()
-    const options: any = {
-        url: 'https://slack.com/api/channels.join',
-        method: 'POST',
-        headers: {
-            'Content-type': 'application/json;charset=utf-8',
-            Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
-        },
-        data: {
-            name: randomName,
-        },
-    };
-    try {
-        const response = await axios(options);
-        if (response.data.already_in_channel) {
-            await createSlackChannel()
-        }
-        console.log('Create channel:', randomName);
-        if (response.data.ok) {
-            return {
-                name: response.data.channel.name,
-                id: response.data.channel.id
-            };
-        }
-    } catch (err) {
-        console.log('Channel creation failed:', err);
-    }
-}
-
-const getSlackWsUrl = async () => {
-    const options: any = {
-        url: 'https://slack.com/api/rtm.connect',
-        method: 'GET',
-        headers: {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
-        }
-    };
-    try {
-        const response = await axios(options);
-        const wsUrl = response.data.url;
-
-        console.log('Connecting to Slack RTM');
-        return wsUrl;
-    } catch (err) {
-        console.log('Connecting to Slack RTM failed:', err);
-    }
-}
 
 const getUserName = async (user: string) => {
     const options: any = {
