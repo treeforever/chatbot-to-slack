@@ -13,7 +13,6 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
 
 const disconnectAnnouncement = '[user disconnected]';
 let lastMsgIsDisconnect = false;
-const offlineMsgAnnouncement = '_User sent an offline message._'
 io.on('connection', async (socket: any) => {
     console.log('a user connected');
     let notifyFirstMessage = true;
@@ -200,8 +199,8 @@ const retrieveConversation = async (channel: string, ts: string) => {
 
 type Reply = { text: string, username?: string, user: string }
 const rebuildConversationForUser = async (messages: any) => {
-    const parentMsg = messages[0].text
-    const firstMsg = parentMsg.substring(slackReturnedOpeningMessageStart.length, parentMsg.search(openingMessageEnd))
+    const parentMsg = messages[0].text;
+    const firstMsg = extractFirstMessage(parentMsg)
     const replyUsers: Array<string> = (messages[0].reply_users as Array<string>).filter((user) => !user.startsWith('B')); // eliminate bot user
     const getUserNamesMap = async () => {
         let userNamesMap: { [key: string]: string } = {};
@@ -214,19 +213,16 @@ const rebuildConversationForUser = async (messages: any) => {
 
     const replies = messages.slice(1).filter((msg: Reply) => msg.text !== disconnectAnnouncement)
         .map((msg: Reply) => {
-            const isOffline = Boolean(msg.text.match(offlineMsgAnnouncement))
             return {
-                text: isOffline ? findOfflineMsg(msg.text) : msg.text,
+                text: msg.text,
                 name: msg.username === 'Chatty' ? 'me' : userNamesMap[msg.user],
-                ...(isOffline ? { offline: true } : {})
             }
         })
 
-
     return [{ text: firstMsg, name: 'me' }, ...replies];
 }
-const findOfflineMsg = (text: string) => {
-    const tag = '&gt;'
-    const index = text.search(tag);
-    return text.slice(index + tag.length)
+const extractFirstMessage = (text: string) => {
+    const tag = '\n&gt;'
+    const index = text.search(tag) + tag.length;
+    return text.slice(index, text.search(openingMessageEnd))
 }

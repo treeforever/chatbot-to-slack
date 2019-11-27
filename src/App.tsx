@@ -104,15 +104,6 @@ const extractThreadTs = (cookie: string) => {
     return ts;
 }
 const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-age=${COOKIE_MAX_AGE}`
-const isOffline = (start: number, end: number) => {
-    const now = new Date();
-    const UTCHours = now.getUTCHours()
-    if (start < end) {
-        return UTCHours >= start && UTCHours <= end
-    } else {
-        return UTCHours >= start || UTCHours <= end
-    }
-}
 
 const AskNameAndEmail = ({ close }: { close: () => void }) => {
     const [name, setName] = useState<string>('');
@@ -126,11 +117,16 @@ const AskNameAndEmail = ({ close }: { close: () => void }) => {
         close();
     }
 
+    const skip = () => {
+        close();
+    }
+
+
     return (
         <div id="name-and-email-container" style={{ padding: '2em' }}>
             <h3>Hi we are here to help</h3>
             <span>Leave us your name and email, so that we can get back to you if we are not online right now</span>
-            <form id="offline-form" onSubmit={onSubmit}>
+            <form id="offline-form" action="" onSubmit={onSubmit}>
                 <label>Name
                     <input type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
                 </label>
@@ -140,11 +136,10 @@ const AskNameAndEmail = ({ close }: { close: () => void }) => {
                 </label>
                 <br />
                 <input type="submit" value="ok" />
-                <button>skip</button>
+                <button onClick={skip}>skip</button>
             </form>
         </div>
     )
-
 }
 
 
