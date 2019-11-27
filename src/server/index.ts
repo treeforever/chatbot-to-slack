@@ -18,6 +18,8 @@ io.on('connection', async (socket: any) => {
     console.log('a user connected');
     let notifyFirstMessage = true;
     let threadTs = '';
+    let userName: string;
+    let userEmail: string;
 
     socket.on('retrieve messages by thread ts', async (ts: string) => {
         threadTs = ts;
@@ -32,7 +34,7 @@ io.on('connection', async (socket: any) => {
                 postMsgToSlackChannel(msg, threadTs)
                 lastMsgIsDisconnect = false;
             } else {
-                threadTs = await initiateChat(msg);
+                threadTs = await initiateChat(msg, userName, userEmail);
                 socket.emit('thread ts', threadTs)
                 notifyFirstMessage = false;
                 lastMsgIsDisconnect = false;
@@ -43,8 +45,9 @@ io.on('connection', async (socket: any) => {
         }
     });
 
-    socket.on('offline message', ({ name, email, message }: { name: string, email: string, message: string }) => {
-        postMsgToSlackChannel(`${offlineMsgAnnouncement}\nName: *${name}*, email: *${email}*\n>${message}`, threadTs)
+    socket.on('name and email', ({ name, email }: { name: string, email: string }) => {
+        userName = name;
+        userEmail = email;
     })
 
     socket.on('disconnect', (reason: string) => {
@@ -111,10 +114,10 @@ const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<Tim
     }
 };
 
-const openingMessageStart = 'Someone started a conversation: \n>'
-const slackReturnedOpeningMessageStart = 'Someone started a conversation: \n&gt;'
-const openingMessageEnd = '\nChat starting in the threads'
-const openingMessage = (msg: string) => `${openingMessageStart}${msg}${openingMessageEnd}`
+const anonymousStart = 'An anonymous user started a conversation: \n>'
+const slackReturnedOpeningMessageStart = 'An anonymous user started a conversation: \n&gt;'
+const openingMessageEnd = '\nChat starting in the threads :point_right:'
+const openingMessage = (msg: string, start: string) => `${start}${msg}${openingMessageEnd}`
 
 /**
  * Notify everyone in #chatty-live-chat that a channel is created to facilitate a new conversation from the website
@@ -123,7 +126,11 @@ const openingMessage = (msg: string) => `${openingMessageStart}${msg}${openingMe
  */
 const initiateChat = async (
     msg: string,
+    name: string,
+    email: string
 ) => {
+    const formattedEmail = '`' + email + '`';
+    const identifiedStart = `*${name}* ${formattedEmail} started a conversation: \n>`
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
         method: 'POST',
@@ -133,7 +140,7 @@ const initiateChat = async (
         },
         data: {
             channel: 'chatty-live-chat',
-            text: openingMessage(msg),
+            text: openingMessage(msg, (name && email ? identifiedStart : anonymousStart)),
         },
     });
     try {

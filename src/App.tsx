@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
+import { useState, useCallback, useEffect, CSSProperties, useRef, Dispatch, SetStateAction } from "react";
 const io = require('socket.io-client');
 const socket = io('http://localhost:8080');
 
@@ -114,23 +114,22 @@ const isOffline = (start: number, end: number) => {
     }
 }
 
-const OfflineForm = () => {
+const AskNameAndEmail = ({ close }: { close: () => void }) => {
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
-    const [message, setMessage] = useState<string>('');
 
 
     const onSubmit = (e: any) => {
         e.preventDefault();
-        if (name.trim() === '' || email.trim() === '' || email.trim() === '') return;
-        socket.emit('offline message', { name, email, message })
-        setMessage('')
+        if (name.trim() === '' || email.trim() === '') return;
+        socket.emit('name and email', { name, email })
+        close();
     }
 
     return (
-        <div>
-            <h3>leave a message</h3>
-            <span>Sorry, support is offline now. Please send us an email. we will get back to you within 24 hours!</span>
+        <div id="name-and-email-container" style={{ padding: '2em' }}>
+            <h3>Hi we are here to help</h3>
+            <span>Leave us your name and email, so that we can get back to you if we are not online right now</span>
             <form id="offline-form" onSubmit={onSubmit}>
                 <label>Name
                     <input type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
@@ -140,10 +139,8 @@ const OfflineForm = () => {
                     <input type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
                 </label>
                 <br />
-                <label>message
-                    <input type="text" name="message" size={2000} value={message} onChange={(e: any) => setMessage(e.target.value)} />
-                </label>
-                <input type="submit" value="send" />
+                <input type="submit" value="ok" />
+                <button>skip</button>
             </form>
         </div>
     )
@@ -158,6 +155,7 @@ export default () => {
     const [readMark, setReadMark] = useState<number>(0);
     const [showNewMessageDot, setNewMessageDot] = useState<boolean>(false);
     const [ts, setTs] = useState<string>(null)
+    const [askNameEmail, setAskNameEmail] = useState(true)
     const onChange = useCallback((e: any) => {
         setInputValue(e.target.value)
     }, [])
@@ -174,6 +172,8 @@ export default () => {
                 setReadMark(conversation.length)
                 setNewMessageDot(false)
             })
+
+            setAskNameEmail(false)
         }
         socket.on('slack message', (data: Message) => {
             setMessages((messages) => [...messages, data])
@@ -227,8 +227,9 @@ export default () => {
         <>
             {isOpen &&
                 <div id="container" style={containerStyle}>
-                    {isOffline(1, 13) ?
-                        <OfflineForm />
+
+                    {askNameEmail ?
+                        <AskNameAndEmail close={() => setAskNameEmail(false)} />
                         :
                         (
                             <>
