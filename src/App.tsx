@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, CSSProperties, useRef, Dispatch, SetStateAction } from "react";
 const io = require('socket.io-client');
+// const socket = io('http://3.135.99.121:8080/');
 const socket = io('http://localhost:8080');
 
 type Message = {
@@ -82,14 +83,41 @@ const logoStyle = (isOpen: boolean, newMessage: boolean) => ({
     border: 'none'
 }) as CSSProperties
 const containerStyle = {
-    border: 'solid 1px #d4d4d4',
-    width: '20em',
-    height: '30em',
+    font: '15px Roboto',
+    color: '#292929',
+    border: 'solid 1px rgb(236, 235, 235)',
+    width: '25em',
+    height: '40em',
     position: 'fixed',
     bottom: '5em',
     right: '.5em',
     borderRadius: '15px',
+    boxShadow: '-2px 10px 12px 0px rgba(201, 197, 201, 0.89)'
 } as CSSProperties
+
+// styling for NameAndEmailComponent
+const startButtonStyle = {
+    font: '13px Roboto',
+    display: 'block',
+    margin: '2em auto',
+    background: '#FAD282',
+    padding: '1em 1.5em',
+    borderRadius: '10px',
+    border: 'none'
+}
+const nameAndEmailCardStyle = {
+    padding: '2em 1.5em',
+    borderRadius: '10px',
+    marginTop: '3em',
+    background: '#f9f9f8'
+}
+const skipButtonStyle = {
+    display: 'block',
+    font: '13px Roboto',
+    border: 0,
+    textDecoration: 'underline',
+    margin: '3em auto',
+}
 
 
 const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
@@ -105,7 +133,7 @@ const extractThreadTs = (cookie: string) => {
 }
 const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-age=${COOKIE_MAX_AGE}`
 
-const AskNameAndEmail = ({ close }: { close: () => void }) => {
+const NameAndEmailForm = ({ close }: { close: () => void }) => {
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
 
@@ -117,27 +145,32 @@ const AskNameAndEmail = ({ close }: { close: () => void }) => {
         close();
     }
 
-    const skip = () => {
-        close();
-    }
-
-
     return (
         <div id="name-and-email-container" style={{ padding: '2em' }}>
-            <h3>Hi we are here to help</h3>
-            <span>Leave us your name and email, so that we can get back to you if we are not online right now</span>
-            <form id="offline-form" action="" onSubmit={onSubmit}>
-                <label>Name
-                    <input type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
-                </label>
-                <br />
-                <label>email
-                    <input type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
-                </label>
-                <br />
-                <input type="submit" value="ok" />
-                <button onClick={skip}>skip</button>
-            </form>
+            <h3>Support</h3>
+            <div id="name-and-email-card" style={nameAndEmailCardStyle}>
+                <div style={{}}>Leave us your name and email, so that we can get back to you if we are not online right now</div>
+                <form id="offline-form" action="" onSubmit={onSubmit} style={{ margin: '3em 1.5em 0' }}>
+                    <div style={{ margin: '2em 0 0' }}>
+                        <label>name
+                    <input style={{ marginLeft: '1em', width: '78%' }}
+                                type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
+                        </label>
+                    </div>
+                    <br />
+                    <div>
+                        <label>email
+                    <input style={{ marginLeft: '1em', width: '79%' }}
+                                type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
+                        </label>
+                    </div>
+
+                    <br />
+                    <input type="submit" value="start the conversation" style={startButtonStyle} />
+
+                </form>
+            </div>
+            <button onClick={close} style={skipButtonStyle}>or skip it</button>
         </div>
     )
 }
@@ -224,7 +257,7 @@ export default () => {
                 <div id="container" style={containerStyle}>
 
                     {askNameEmail ?
-                        <AskNameAndEmail close={() => setAskNameEmail(false)} />
+                        <NameAndEmailForm close={() => setAskNameEmail(false)} />
                         :
                         (
                             <>
