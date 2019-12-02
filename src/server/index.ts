@@ -6,6 +6,7 @@ const { RTMClient, LogLevel } = require('@slack/rtm-api');
 require('dotenv').config()
 import { generateRandomChannelName } from './utils';
 
+const chattyLiveChat = 'CQSLJNMDY'
 
 const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
     logLevel: LogLevel.INFO
@@ -22,7 +23,6 @@ io.on('connection', async (socket: any) => {
 
     socket.on('retrieve messages by thread ts', async (ts: string) => {
         threadTs = ts;
-        const chattyLiveChat = 'CQ85K0E0Z'
         const conversation = await retrieveConversation(chattyLiveChat, threadTs)
         socket.emit('retrieve conversation', conversation)
     })
@@ -118,11 +118,6 @@ const slackReturnedOpeningMessageStart = 'An anonymous user started a conversati
 const openingMessageEnd = '\nChat starting in the threads :point_right:'
 const openingMessage = (msg: string, start: string) => `${start}${msg}${openingMessageEnd}`
 
-/**
- * Notify everyone in #chatty-live-chat that a channel is created to facilitate a new conversation from the website
- * @param msg 
- * @param channel 
- */
 const initiateChat = async (
     msg: string,
     name: string,
