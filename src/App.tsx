@@ -47,15 +47,19 @@ const messageStyle = (isMe: boolean) => ({
     }
 }) as CSSProperties
 const formStyle = {
-    background: '#000',
     padding: '3px',
     width: '100%',
 } as CSSProperties
+const formContainerStyle = {
+    boxShadow: 'rgba(247, 246, 246, 0.75) 0px -7px 6px'
+}
 const inputStyle = {
     border: 0,
     padding: '10px',
-    width: '80%',
+    width: '100%',
     marginRight: '.5%',
+    font: '15px Roboto',
+    height: '3.5em'
 }
 const buttonStyle = {
     background: blue,
@@ -153,14 +157,14 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
                 <form id="offline-form" action="" onSubmit={onSubmit} style={{ margin: '3em 1.5em 0' }}>
                     <div style={{ margin: '2em 0 0' }}>
                         <label>name
-                    <input style={{ marginLeft: '1em', width: '78%' }}
+                    <input style={{ marginLeft: '1em', width: '78%', height: '2.5em' }}
                                 type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
                         </label>
                     </div>
                     <br />
                     <div>
                         <label>email
-                    <input style={{ marginLeft: '1em', width: '79%' }}
+                    <input style={{ marginLeft: '1em', width: '78%', height: '2.5em' }}
                                 type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
                         </label>
                     </div>
@@ -276,10 +280,20 @@ export default () => {
                                         </li>
                                     )}
                                 </ul>
-                                <form action="" onSubmit={onSubmit} style={formStyle}>
-                                    <input onChange={onChange} value={inputValue} style={inputStyle} autoFocus />
-                                    <button style={buttonStyle}>Send</button>
-                                </form>
+                                <div id="form-container" style={formContainerStyle}>
+                                    <form action="" onSubmit={onSubmit} style={formStyle}>
+
+                                        <input
+                                            onChange={onChange}
+                                            value={inputValue}
+                                            style={inputStyle}
+                                            autoFocus
+                                            placeholder="Type here..."
+                                            aria-description="type your message here"
+                                        />
+
+                                    </form>
+                                </div>
                             </>
                         )}
                 </div>
