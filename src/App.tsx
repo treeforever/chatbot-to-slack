@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
 const io = require('socket.io-client');
-const socket = io('http://3.135.99.121:8080/');
+const socket = io('https://3.135.99.121:8080');
 // const socket = io('http://localhost:8080');
 
 type Message = {
@@ -92,6 +92,8 @@ const containerStyle = {
     right: '.5em',
     borderRadius: '15px',
     boxShadow: '-2px 10px 12px 0px rgba(201, 197, 201, 0.89)',
+    background: 'white',
+    zIndex: 9999
 } as CSSProperties
 
 // styling for NameAndEmailComponent
@@ -146,20 +148,20 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
 
     return (
         <div id="name-and-email-container" style={{ padding: '2em' }}>
-            <h3>Support</h3>
+            <div style={{ fontSize: '1.2em' }}>Support</div>
             <div id="name-and-email-card" style={nameAndEmailCardStyle}>
                 <div style={{}}>Leave us your name and email, so that we can get back to you if we are not online right now</div>
                 <form id="offline-form" action="" onSubmit={onSubmit} style={{ margin: '3em 1.5em 0' }}>
                     <div style={{ margin: '2em 0 0' }}>
                         <label>name
-                    <input style={{ marginLeft: '1em', width: '78%', height: '2.5em' }}
+                    <input style={{ marginLeft: '1em', height: '30px' }}
                                 type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
                         </label>
                     </div>
                     <br />
                     <div>
                         <label>email
-                    <input style={{ marginLeft: '1em', width: '78%', height: '2.5em' }}
+                    <input style={{ marginLeft: '1em', height: '30px' }}
                                 type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
                         </label>
                     </div>
@@ -253,7 +255,7 @@ export default () => {
     return (
         <>
             {isOpen &&
-                <div id="container" style={containerStyle}>
+                <div id="container" role="dialog" aria-label="chatty customer support" style={containerStyle}>
 
                     {askNameEmail ?
                         <NameAndEmailForm close={() => setAskNameEmail(false)} />
@@ -283,8 +285,8 @@ export default () => {
                                             value={inputValue}
                                             style={inputStyle}
                                             autoFocus
-                                            placeholder="Type here..."
-                                            aria-description="type your message here"
+                                            placeholder="Type your message here..."
+                                            aria-label="type your message here"
                                         />
 
                                     </form>
