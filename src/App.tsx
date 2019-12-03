@@ -122,7 +122,7 @@ const skipButtonStyle = {
 
 
 const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
-    <img src={newMessage ? "/new_message_logo.png" : "/logo.png"} style={logoStyle} onClick={() => clickHandler(!isOpen)} />
+    <img src={newMessage ? "https://eager-kowalevski-ce1d45.netlify.com/new_message_logo.png" : "https://eager-kowalevski-ce1d45.netlify.com/logo.png"} style={logoStyle} onClick={() => clickHandler(!isOpen)} />
 
 const COOKIE_KEY = 'chatty_thread_ts'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 2 // two days
