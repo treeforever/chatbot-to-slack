@@ -3,7 +3,6 @@ import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
 const io = require('socket.io-client');
 const socket = io('http://3.135.99.121:8080/');
 // const socket = io('http://localhost:8080');
-import logo from './logo.png';
 
 type Message = {
     text: string,
@@ -76,18 +75,12 @@ const ulStyle = {
     overflowY: 'auto',
     height: '90%',
 } as CSSProperties
-const logoStyle = (isOpen: boolean, newMessage: boolean) => ({
+const logoStyle = {
     position: 'fixed',
     bottom: 0,
     right: 0,
     zIndex: 9999,
-    // background: 'url(./logo.png)',
-    // background: newMessage ? 'pink' : (isOpen ? darkBlue : blue),
-    // width: '5em',
-    // height: '5em',
-    // borderRadius: '100%',
-    // border: 'none'
-}) as CSSProperties
+} as CSSProperties
 const containerStyle = {
     font: '15px Roboto',
     color: '#292929',
@@ -127,7 +120,7 @@ const skipButtonStyle = {
 
 
 const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
-    <img src={logo} style={logoStyle(isOpen, newMessage)} onClick={() => clickHandler(!isOpen)} />
+    <img src={newMessage ? "/new_message_logo.png" : "/logo.png"} style={logoStyle} onClick={() => clickHandler(!isOpen)} />
 
 const COOKIE_KEY = 'chatty_thread_ts'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 2 // two days

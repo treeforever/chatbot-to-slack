@@ -13,7 +13,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, 'dist/'),
-        filename: 'js/[name].bundle.js'
+        filename: 'js/[name].bundle.js',
     },
     mode,
     devtool,
@@ -31,13 +31,7 @@ module.exports = {
                         "sourceMap": !isProduction,
                     }
                 }
-            },
-            {
-                test: /\.(png|svg|jpg|gif)$/,
-                use: [
-                    'file-loader',
-                ],
-            },
+            }
             { enforce: "pre", test: /\.js$/, loader: "source-map-loader" }
         ]
     },
@@ -50,6 +44,7 @@ module.exports = {
         hot: true,
         port: 3000,
         disableHostCheck: true,
-        historyApiFallback: true
+        historyApiFallback: true,
+        contentBase: path.join(__dirname, 'public'),
     }
 }
