@@ -24,7 +24,7 @@ io.on('connection', async (socket: any) => {
     socket.on('retrieve messages by thread ts', async (ts: string) => {
         threadTs = ts;
         const conversation = await retrieveConversation(chattyLiveChat, threadTs)
-        socket.emit('retrieve conversation', conversation)
+        if (conversation) socket.emit('retrieve conversation', conversation)
     })
 
     socket.on('browser message', async (msg: string) => {
@@ -184,9 +184,9 @@ const retrieveConversation = async (channel: string, ts: string) => {
             console.log('getting back conversation')
             return rebuildConversationForUser(response.data.messages)
         } else {
-            console.log('getting back conversation not ok', response.data.error)
+            console.log('getting back conversation not ok', response.data.error);
+            return null;
         }
-        return response.data.messages as SlackConversation;
     } catch (err) {
         console.log('Getting back conversation failed', err);
     }
