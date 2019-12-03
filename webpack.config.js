@@ -14,7 +14,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, 'dist/'),
-        filename: 'js/[name].bundle.js',
+        filename: 'js/chatty_[name].bundle.js',
     },
     mode,
     devtool,

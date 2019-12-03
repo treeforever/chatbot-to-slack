@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
 const io = require('socket.io-client');
-const socket = io('http://3.135.99.121:8080');
+const socket = io('//parrot.ai.science');
 // const socket = io('http://localhost:8080');
 
 type Message = {
