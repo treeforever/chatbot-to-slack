@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
 const io = require('socket.io-client');
-const socket = io('//parrot.ai.science');
+// const socket = io('//3.135.99.121');
+const socket = io('https://parrot.ai.science');
 // const socket = io('http://localhost:8080');
 
 type Message = {
@@ -97,15 +98,15 @@ const containerStyle = {
 } as CSSProperties
 
 // styling for NameAndEmailComponent
-const startButtonStyle = {
+const startButtonStyle = (disabled: boolean) => ({
     font: '13px Roboto',
     display: 'block',
     margin: '2em auto',
-    background: '#FAD282',
+    background: disabled ? 'rgb(216, 216, 216)' : '#FAD282',
     padding: '1em 1.5em',
     borderRadius: '10px',
-    border: 'none'
-}
+    border: 'none',
+})
 const nameAndEmailCardStyle = {
     padding: '2em 1.5em',
     borderRadius: '10px',
@@ -145,12 +146,13 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
         socket.emit('name and email', { name, email })
         close();
     }
+    const startButtonDisabled = !(name && email)
 
     return (
         <div id="name-and-email-container" style={{ padding: '2em' }}>
             <div style={{ fontSize: '1.2em' }}>Support</div>
             <div id="name-and-email-card" style={nameAndEmailCardStyle}>
-                <div style={{}}>Leave us your name and email, so that we can get back to you if we are not online right now</div>
+                <div style={{}}>Leave us your name and email, so that we can get back to you if we are not online right now (optional)</div>
                 <form id="offline-form" action="" onSubmit={onSubmit} style={{ margin: '3em 1.5em 0' }}>
                     <div style={{ margin: '2em 0 0' }}>
                         <label>name
@@ -167,7 +169,7 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
                     </div>
 
                     <br />
-                    <input type="submit" value="start the conversation" style={startButtonStyle} />
+                    <input type="submit" value="start the conversation" style={startButtonStyle(startButtonDisabled)} {...{ disabled: !(name && email) }} />
 
                 </form>
             </div>
