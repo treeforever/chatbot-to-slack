@@ -31,7 +31,7 @@ module.exports = {
                         "sourceMap": !isProduction,
                     }
                 }
-            }
+            },
             { enforce: "pre", test: /\.js$/, loader: "source-map-loader" }
         ]
     },
