@@ -121,9 +121,9 @@ const skipButtonStyle = {
     margin: '3em auto',
 }
 
-const newMessageLogo = "./new_message_logo.png";
+const newMessageLogo = "https://eager-kowalevski-ce1d45.netlify.com/new_message_logo.png";
 const logo = "https://eager-kowalevski-ce1d45.netlify.com/logo.png";
-const closeLogo = './logo_close.png'
+const closeLogo = 'https://eager-kowalevski-ce1d45.netlify.com/logo_close.png'
 const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
     <img src={newMessage ? newMessageLogo : (isOpen ? closeLogo : logo)} style={logoStyle} onClick={() => clickHandler(!isOpen)} />
 
