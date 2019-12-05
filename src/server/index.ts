@@ -17,7 +17,7 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
 
 const disconnectAnnouncement = '[user disconnected]';
 let lastMsgIsDisconnect = false;
-io.on('connection', async (socket: any) => {
+io.on('connection', async (socket) => {
     console.info('a user connected');
     let notifyFirstMessage = true;
     let threadTs = '';
@@ -62,16 +62,16 @@ io.on('connection', async (socket: any) => {
 
 
     // connect to Slack RTM to receive events
-    console.debug(rtm.connected)
+    console.debug("rtm.connected", rtm.connected);
     if (!rtm.connected) {
         try {
-            await rtm.start()
+            await rtm.start();
         } catch (err) {
             console.error('Starting rtm failed', err)
         }
     }
 
-    rtm.on('message', async (event: any) => {
+    rtm.on('message', async (event) => {
         // console.log('sent from Slack SDK', event);
 
         // filter to only replies and sent by users that are not Chatty
@@ -84,14 +84,10 @@ io.on('connection', async (socket: any) => {
 });
 
 http.listen(8080, function () {
-    console.log('listening on *:8080');
+    console.info('listening on *:8080');
 });
 
 type TimeStamp = string;
-type Channel = {
-    id: string,
-    name: string
-}
 
 const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<TimeStamp> => {
     const options = ({
@@ -108,11 +104,11 @@ const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<Tim
         },
     });
     try {
-        const response = await axios(options);
-        console.log('Posted message to Slack ');
-        return response.data.ts;
+        const { data }: { data: slack.SlackResponse } = await axios(options);
+        console.info('Posted message to Slack ');
+        return data.ts;
     } catch (err) {
-        console.log('Message post failed:', err);
+        console.error('Message post failed:', err);
     }
 };
 
@@ -143,53 +139,52 @@ const initiateChat = async (
         },
     });
     try {
-        const response = await axios(options);
-        console.info('Notified', response.data);
-        return response.data.ts
+        const { data }: { data: slack.SlackResponse } = await axios(options);
+        console.info('Notified', data);
+        return data.ts;
     } catch (err) {
         console.error('Message post failed:', err);
     }
 };
 
 const getUserName = async (user: string) => {
-    const options: any = {
+    const options = {
         url: `https://slack.com/api/users.info?user=${user}`,
-        method: 'GET',
+        method: 'GET' as const,
         headers: {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: `Bearer ${process.env.BOT_USER_TOKEN}`,
         },
     };
     try {
-        const response = await axios(options);
-        if (response.data.ok) {
-            return response.data.user.profile.real_name_normalized
+        const { data }: { data: slack.UserInfo } = await axios(options);
+        if (data.ok === true) {
+            return data.user.profile.real_name_normalized
         } else {
-            console.info('Getting username not ok', response.data.error)
+            console.info('Getting username not ok', data.error)
         }
     } catch (err) {
-        console.info('Getting username failed', err);
+        console.error('Getting username failed', err);
     }
 }
 
-type SlackConversation = Array<{ text: string }>
 
 const retrieveConversation = async (channel: string, ts: string) => {
-    const options: any = {
+    const options = {
         url: `https://slack.com/api/conversations.replies?channel=${channel}&ts=${ts}`,
-        method: 'GET',
+        method: 'GET' as const,
         headers: {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
         },
     };
     try {
-        const response = await axios(options);
-        if (response.data.ok) {
+        const { data }: { data: slack.ConversationReplies } = await axios(options);
+        if (data.ok === true) {
             console.info('getting back conversation')
-            return rebuildConversationForUser(response.data.messages)
+            return rebuildConversationForUser(data.messages)
         } else {
-            console.info('getting back conversation not ok', response.data.error);
+            console.info('getting back conversation not ok', data.error);
             return null;
         }
     } catch (err) {
@@ -198,10 +193,13 @@ const retrieveConversation = async (channel: string, ts: string) => {
 }
 
 type Reply = { text: string, username?: string, user: string }
-const rebuildConversationForUser = async (messages: any) => {
+const rebuildConversationForUser = async (messages: slack.Messages) => {
+    const a = messages[0];
     const parentMsg = messages[0].text;
     const firstMsg = extractFirstMessage(parentMsg)
-    const replyUsers: Array<string> = (messages[0].reply_users as Array<string>).filter((user) => !user.startsWith('B')); // eliminate bot user
+    const replyUsers: Array<string> = (
+        messages[0].reply_users as Array<string>)
+        .filter((user) => !user.startsWith('B')); // eliminate bot user
     const getUserNamesMap = async () => {
         let userNamesMap: { [key: string]: string } = {};
         await Promise.all(replyUsers.map(async (user) => {
