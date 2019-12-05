@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useCallback, useEffect, CSSProperties, useRef } from "react";
-const io = require('socket.io-client');
+import * as io from 'socket.io-client';
 // const socket = io('//3.135.99.121');
 const socket = io('https://parrot.ai.science');
 // const socket = io('http://localhost:8080');
@@ -124,8 +124,11 @@ const skipButtonStyle = {
 const newMessageLogo = "https://eager-kowalevski-ce1d45.netlify.com/new_message_logo.png";
 const logo = "https://eager-kowalevski-ce1d45.netlify.com/logo.png";
 const closeLogo = 'https://eager-kowalevski-ce1d45.netlify.com/logo_close.png'
-const ChatLogo = ({ isOpen, clickHandler, newMessage }: { isOpen: boolean, clickHandler: Function, newMessage: boolean }) =>
-    <img src={newMessage ? newMessageLogo : (isOpen ? closeLogo : logo)} style={logoStyle} onClick={() => clickHandler(!isOpen)} />
+const ChatLogo = ({ isOpen, clickHandler, newMessage }: {
+    isOpen: boolean, clickHandler: Function, newMessage: boolean
+}) =>
+    <img src={newMessage ? newMessageLogo : (isOpen ? closeLogo : logo)}
+        style={logoStyle} onClick={() => clickHandler(!isOpen)} />
 
 const COOKIE_KEY = 'chatty_thread_ts'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 2 // two days
@@ -142,7 +145,7 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
     const [email, setEmail] = useState<string>('');
 
 
-    const onSubmit = (e: any) => {
+    const onSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (name.trim() === '' || email.trim() === '') return;
         socket.emit('name and email', { name, email })
@@ -182,18 +185,18 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
 
 
 export default () => {
-    const [inputValue, setInputValue] = useState<string>('');
+    const [inputValue, setInputValue] = useState('');
     const [messages, setMessages] = useState<Message[]>([])
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-    const [readMark, setReadMark] = useState<number>(0);
-    const [showNewMessageDot, setNewMessageDot] = useState<boolean>(false);
-    const [ts, setTs] = useState<string>(null)
+    const [isOpen, setIsOpen] = useState(false);
+    const [readMark, setReadMark] = useState(0);
+    const [showNewMessageDot, setNewMessageDot] = useState(false);
+    const [ts, setTs] = useState<string | null>(null)
     const [askNameEmail, setAskNameEmail] = useState(true)
-    const onChange = useCallback((e: any) => {
+    const onMessageInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value)
     }, [])
 
-    const refMessages = useRef(null);
+    const refMessages = useRef<HTMLUListElement>(null);
 
     useEffect(() => {
         if (containChattyThreadTs(document.cookie)) {
@@ -208,14 +211,22 @@ export default () => {
 
             setAskNameEmail(false)
         }
-        socket.on('slack message', (data: Message) => {
+
+        const onMessage = (data: Message) => {
             setMessages((messages) => [...messages, data])
-        })
-        socket.on('thread ts', (ts: string) => {
+        };
+        const onThreadTs = (ts: string) => {
             writeCookie(ts);
             setTs(ts);
-        })
-    }, [])
+        };
+        socket.on('slack message', onMessage);
+        socket.on('thread ts', onThreadTs);
+
+        return () => {
+            socket.off('slack message', onMessage);
+            socket.off('thread ts', onThreadTs);
+        }
+    }, []);
 
     useEffect(() => {
         const scrollToLatestMessage = () => {
@@ -240,18 +251,18 @@ export default () => {
         }
     }, [messages, readMark, isOpen])
 
-    const clickHandler = () => {
+    const onLogoClick = (isOpen: boolean) => {
         if (!isOpen) {
-            setNewMessageDot(false)
+            setNewMessageDot(false);
         }
         setIsOpen(!isOpen);
     }
 
-    const onSubmit = (e: any) => {
+    const onContactFormSubmit = (e: any) => {
         e.preventDefault();
         if (inputValue.trim() === '') return;
         setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
-        socket.emit('browser message', inputValue)
+        socket.emit('browser message', inputValue);
         setInputValue('');
         writeCookie(ts)
     }
@@ -259,12 +270,13 @@ export default () => {
     return (
         <>
             {isOpen &&
-                <div id="container" role="dialog" aria-label="chatty customer support" style={containerStyle}>
-
+                <div id="container" role="dialog"
+                    aria-label="chatty customer support"
+                    style={containerStyle}
+                >
                     {askNameEmail ?
                         <NameAndEmailForm close={() => setAskNameEmail(false)} />
-                        :
-                        (
+                        : (
                             <>
                                 <ul id="messages" style={ulStyle} ref={refMessages}>
                                     {messages.map((m, index) =>
@@ -282,10 +294,10 @@ export default () => {
                                     )}
                                 </ul>
                                 <div id="form-container" style={formContainerStyle}>
-                                    <form action="" onSubmit={onSubmit} style={formStyle}>
+                                    <form action="" onSubmit={onContactFormSubmit} style={formStyle}>
 
                                         <input
-                                            onChange={onChange}
+                                            onChange={onMessageInputChange}
                                             value={inputValue}
                                             style={inputStyle}
                                             autoFocus
@@ -299,6 +311,10 @@ export default () => {
                         )}
                 </div>
             }
-            <ChatLogo isOpen={isOpen} clickHandler={clickHandler} newMessage={showNewMessageDot} />
+            <ChatLogo
+                isOpen={isOpen}
+                clickHandler={() => onLogoClick(isOpen)}
+                newMessage={showNewMessageDot}
+            />
         </>)
 }

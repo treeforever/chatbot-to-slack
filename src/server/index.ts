@@ -1,12 +1,15 @@
-const app = require('express')();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, { origins: '*:*' });
-const axios = require('axios');
-const { RTMClient, LogLevel } = require('@slack/rtm-api');
+import Express = require('express');
+import Http = require('http');
+import SocketIO = require('socket.io');
+import axios from 'axios';
+import { RTMClient, LogLevel } from '@slack/rtm-api';
 require('dotenv').config()
-import { generateRandomChannelName } from './utils';
 
-const chattyLiveChat = 'CQSLJNMDY'
+const app = Express();
+const http = Http.createServer(app);
+const io = SocketIO(http, { origins: '*:*' });
+
+const chattyLiveChat = 'CQSLJNMDY';
 
 const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
     logLevel: LogLevel.INFO
@@ -15,7 +18,7 @@ const rtm = new RTMClient(process.env.BOT_USER_TOKEN, {
 const disconnectAnnouncement = '[user disconnected]';
 let lastMsgIsDisconnect = false;
 io.on('connection', async (socket: any) => {
-    console.log('a user connected');
+    console.info('a user connected');
     let notifyFirstMessage = true;
     let threadTs = '';
     let userName: string;
@@ -54,12 +57,12 @@ io.on('connection', async (socket: any) => {
             postMsgToSlackChannel(disconnectAnnouncement, threadTs)
             lastMsgIsDisconnect = true;
         }
-        console.log('Chatbot disconnected', reason)
+        console.info('Chatbot disconnected', reason)
     })
 
 
     // connect to Slack RTM to receive events
-    console.log(rtm.connected)
+    console.debug(rtm.connected)
     if (!rtm.connected) {
         try {
             await rtm.start()
@@ -93,7 +96,7 @@ type Channel = {
 const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<TimeStamp> => {
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
-        method: 'POST',
+        method: 'POST' as const,
         headers: {
             'Content-type': 'application/json;charset=utf-8',
             Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
@@ -127,22 +130,24 @@ const initiateChat = async (
     const identifiedStart = `*${name}* ${formattedEmail} started a conversation: \n>`
     const options = ({
         url: 'https://slack.com/api/chat.postMessage',
-        method: 'POST',
+        method: 'POST' as const,
         headers: {
             'Content-type': 'application/json;charset=utf-8',
             Authorization: `Bearer ${process.env.SLACK_OAUTH_TOKEN}`,
         },
         data: {
             channel: 'chatty-live-chat',
-            text: openingMessage(msg, (name && email ? identifiedStart : anonymousStart)),
+            text: openingMessage(msg,
+                (name && email ? identifiedStart : anonymousStart)
+            ),
         },
     });
     try {
         const response = await axios(options);
-        console.log('Notified', response.data);
+        console.info('Notified', response.data);
         return response.data.ts
     } catch (err) {
-        console.log('Message post failed:', err);
+        console.error('Message post failed:', err);
     }
 };
 
@@ -160,10 +165,10 @@ const getUserName = async (user: string) => {
         if (response.data.ok) {
             return response.data.user.profile.real_name_normalized
         } else {
-            console.log('Getting username not ok', response.data.error)
+            console.info('Getting username not ok', response.data.error)
         }
     } catch (err) {
-        console.log('Getting username failed', err);
+        console.info('Getting username failed', err);
     }
 }
 
@@ -181,14 +186,14 @@ const retrieveConversation = async (channel: string, ts: string) => {
     try {
         const response = await axios(options);
         if (response.data.ok) {
-            console.log('getting back conversation')
+            console.info('getting back conversation')
             return rebuildConversationForUser(response.data.messages)
         } else {
-            console.log('getting back conversation not ok', response.data.error);
+            console.info('getting back conversation not ok', response.data.error);
             return null;
         }
     } catch (err) {
-        console.log('Getting back conversation failed', err);
+        console.error('Getting back conversation failed', err);
     }
 }
 
