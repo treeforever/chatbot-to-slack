@@ -10,7 +10,6 @@ type Message = {
     name: string
 }
 const blue = 'rgb(130, 224, 255)';
-const darkBlue = 'rgb(54, 153, 186)'
 const grey = '#f5f6f7';
 const listStyle = (isMe: boolean) => ({
     padding: '5px 10px',
@@ -60,13 +59,9 @@ const inputStyle = {
     width: '100%',
     marginRight: '.5%',
     font: '15px Roboto',
-    height: '3.5em'
-}
-const buttonStyle = {
-    background: blue,
-    border: 'none',
-    padding: '10px',
-}
+    height: '3.5em',
+    boxSizing: 'border-box'
+} as CSSProperties
 const ulStyle = {
     wordBreak: 'break-word',
     listStyleType: 'none',
