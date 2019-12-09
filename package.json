@@ -7,8 +7,8 @@
     "analyze": "source-map-explorer 'dist/js/*.js'",
     "start": "webpack-dev-server  --open",
     "serve": "nodemon",
-    "devbuild": "webpack -d",
-    "build": "webpack -p"
+    "devbuild": "NODE_ENV=development webpack",
+    "build": "NODE_ENV=production webpack"
   },
   "author": "",
   "license": "ISC",
