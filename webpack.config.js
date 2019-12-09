@@ -7,6 +7,8 @@ const isProduction = typeof process.env.NODE_ENV !== 'undefined' && process.env.
 const mode = isProduction ? 'production' : 'development';
 const devtool = isProduction ? false : 'inline-source-map';
 
+console.log('production??', mode)
+
 module.exports = {
     entry: {
         app: ['./src/index.tsx', 'webpack-hot-middleware/client'],
