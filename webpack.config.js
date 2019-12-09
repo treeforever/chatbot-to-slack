@@ -3,9 +3,11 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
-const isProduction = typeof NODE_ENV !== 'undefined' && NODE_ENV === 'production';
+const isProduction = typeof process.env.NODE_ENV !== 'undefined' && process.env.NODE_ENV === 'production';
 const mode = isProduction ? 'production' : 'development';
 const devtool = isProduction ? false : 'inline-source-map';
+
+console.log('production??', mode)
 
 module.exports = {
     entry: {
