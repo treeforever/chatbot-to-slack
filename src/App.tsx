@@ -52,6 +52,7 @@ const formStyle = {
     width: '100%',
 } as CSSProperties
 const formContainerStyle = {
+    marginTop: '3em',
     boxShadow: '#f1f1f1 -1px -6px 10px 0px'
 }
 const inputStyle = {
@@ -64,15 +65,15 @@ const inputStyle = {
     boxSizing: 'border-box',
     borderRadius: '0 0 15px 15px'
 } as CSSProperties
-const ulStyle = {
+const ulStyle = (isOffline: boolean) => ({
     wordBreak: 'break-word',
     listStyleType: 'none',
-    margin: 0,
+    marginTop: '1em',
     padding: '0 1em',
     overflowX: 'hidden',
     overflowY: 'auto',
-    height: '82%',
-} as CSSProperties
+    height: isOffline ? '57%' : '72%',
+}) as CSSProperties
 const logoStyle = {
     position: 'fixed',
     bottom: 0,
@@ -132,6 +133,12 @@ const headerStyle = {
     background: brandGrey,
     borderRadius: '15px 15px 0 0',
     fontWeight: 450
+}
+const offlineReminderStyle = {
+    padding: '2em 3em 0',
+    fontSize: '12px',
+    lineHeight: '1.5em',
+    color: 'grey'
 }
 
 const newMessageLogo = "https://eager-kowalevski-ce1d45.netlify.com/new_message_logo.png";
@@ -217,6 +224,8 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
     )
 }
 
+const OfflineReminder = () =>
+    <div id="offline-reminder" style={offlineReminderStyle}>Office hours are 9am to 9pm Eastern Time (GMT-05:00). But you can still leave a message, our staff will get back to you as soon as they can.</div>
 
 export default () => {
     const [inputValue, setInputValue] = useState('');
@@ -301,6 +310,8 @@ export default () => {
         writeCookie(ts)
     }
 
+    const isOffline = !isOfficeHours(AISC_OFFICE_HOURS)
+
     return (
         <>
             {isOpen &&
@@ -313,7 +324,7 @@ export default () => {
                         <NameAndEmailForm close={() => setAskNameEmail(false)} />
                         : (
                             <>
-                                <ul id="messages" style={ulStyle} ref={refMessages}>
+                                <ul id="messages" style={ulStyle(isOffline)} ref={refMessages}>
                                     {messages.map((m, index) =>
                                         <li
                                             key={index + m.text.slice(0, 3)}
@@ -328,6 +339,9 @@ export default () => {
                                         </li>
                                     )}
                                 </ul>
+
+                                {isOffline && <OfflineReminder />}
+
                                 <div id="form-container" style={formContainerStyle}>
                                     <form action="" onSubmit={onContactFormSubmit} style={formStyle}>
 
