@@ -19,7 +19,6 @@ const disconnectAnnouncement = '[user disconnected]';
 let lastMsgIsDisconnect = false;
 io.on('connection', async (socket) => {
     console.info('a user connected');
-    let notifyFirstMessage = true;
     let threadTs = '';
     let userName: string;
     let userEmail: string;
@@ -31,18 +30,12 @@ io.on('connection', async (socket) => {
     })
 
     socket.on('browser message', async (msg: string) => {
-        if (notifyFirstMessage) {
-            if (threadTs) {
-                postMsgToSlackChannel(msg, threadTs)
-                lastMsgIsDisconnect = false;
-            } else {
-                threadTs = await initiateChat(msg, userName, userEmail);
-                socket.emit('thread ts', threadTs)
-                notifyFirstMessage = false;
-                lastMsgIsDisconnect = false;
-            }
-        } else {
+        if (threadTs) {
             postMsgToSlackChannel(msg, threadTs)
+            lastMsgIsDisconnect = false;
+        } else {
+            threadTs = await initiateChat(msg, userName, userEmail);
+            socket.emit('thread ts', threadTs)
             lastMsgIsDisconnect = false;
         }
     });
@@ -59,7 +52,6 @@ io.on('connection', async (socket) => {
         }
         console.info('Chatbot disconnected', reason)
     })
-
 
     // connect to Slack RTM to receive events
     console.debug("rtm.connected", rtm.connected);
@@ -113,7 +105,6 @@ const postMsgToSlackChannel = async (msg: string, threadTs: string): Promise<Tim
 };
 
 const anonymousStart = 'An anonymous user started a conversation: \n>'
-const slackReturnedOpeningMessageStart = 'An anonymous user started a conversation: \n&gt;'
 const openingMessageEnd = '\nChat starting in the threads :point_right:'
 const openingMessage = (msg: string, start: string) => `${start}${msg}${openingMessageEnd}`
 
