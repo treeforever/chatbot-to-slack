@@ -9,8 +9,10 @@ type Message = {
     text: string,
     name: string
 }
-const blue = 'rgb(130, 224, 255)';
-const grey = '#f5f6f7';
+const brandBlue = '#add4ff';
+const brandGrey = '#f3f3f3';
+const onlineGreen = '#27f327'
+const offlineRed = '#fb3f61'
 const listStyle = (isMe: boolean) => ({
     padding: '5px 10px',
     marginTop: '.5em',
@@ -21,7 +23,7 @@ const messageStyle = (isMe: boolean) => ({
     position: 'relative',
     borderRadius: '.4em',
     padding: '1em',
-    background: isMe ? blue : grey,
+    background: isMe ? brandBlue : brandGrey,
     maxWidth: '80%',
     '&:after': {
         content: '',
@@ -33,13 +35,13 @@ const messageStyle = (isMe: boolean) => ({
         marginTop: '-12px',
         ...(isMe ? {
             right: 0,
-            borderLeftColor: blue,
+            borderLeftColor: brandBlue,
             borderRight: 0,
             marginRight: '-12px',
 
         } : {
                 left: 0,
-                borderRightColor: grey,
+                borderRightColor: brandGrey,
                 borderLeft: 0,
                 marginLeft: '-12px',
 
@@ -47,7 +49,6 @@ const messageStyle = (isMe: boolean) => ({
     }
 }) as CSSProperties
 const formStyle = {
-    padding: '3px',
     width: '100%',
 } as CSSProperties
 const formContainerStyle = {
@@ -60,7 +61,8 @@ const inputStyle = {
     marginRight: '.5%',
     font: '15px Roboto',
     height: '3.5em',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    borderRadius: '0 0 15px 15px'
 } as CSSProperties
 const ulStyle = {
     wordBreak: 'break-word',
@@ -69,7 +71,7 @@ const ulStyle = {
     padding: '0 1em',
     overflowX: 'hidden',
     overflowY: 'auto',
-    height: '90%',
+    height: '82%',
 } as CSSProperties
 const logoStyle = {
     position: 'fixed',
@@ -105,15 +107,31 @@ const startButtonStyle = (disabled: boolean) => ({
 const nameAndEmailCardStyle = {
     padding: '2em 1.5em',
     borderRadius: '10px',
-    marginTop: '3em',
-    background: '#f9f9f8'
+    margin: '3em 2em 0 2em',
+    background: brandGrey
 }
+const nameEmailInputStyle = { marginLeft: '1em', height: '30px', border: 'none', borderRadius: '3px' }
 const skipButtonStyle = {
     display: 'block',
     font: '13px Roboto',
     border: 0,
     textDecoration: 'underline',
     margin: '3em auto',
+}
+const onlineDotStyle = (isOnline: boolean) => ({
+    display: 'inline-block',
+    width: '.5em',
+    height: '.5em',
+    borderRadius: '50%',
+    background: isOnline ? onlineGreen : offlineRed,
+    margin: '0 0.2em 0 1em'
+})
+const headerStyle = {
+    fontSize: '1.3em',
+    padding: '.8em 1em',
+    background: brandGrey,
+    borderRadius: '15px 15px 0 0',
+    fontWeight: 450
 }
 
 const newMessageLogo = "https://eager-kowalevski-ce1d45.netlify.com/new_message_logo.png";
@@ -134,7 +152,29 @@ const extractThreadTs = (cookie: string) => {
     return ts;
 }
 const writeCookie = (ts: string) => document.cookie = `${COOKIE_KEY}=${ts}; max-age=${COOKIE_MAX_AGE}`
-
+const isOfficeHours = ([start, end]: number[]) => {
+    const now = new Date();
+    const UTCHours = now.getUTCHours()
+    if (start < end) {
+        return UTCHours >= start && UTCHours <= end
+    } else if (start === end) {
+        return true;
+    } else {
+        return UTCHours >= start || UTCHours <= end
+    }
+}
+const AISC_OFFICE_HOURS = [14, 2]
+const Header = () => {
+    const isOnline = isOfficeHours(AISC_OFFICE_HOURS)
+    const isOnlineStyle = onlineDotStyle(isOnline)
+    const isOnlineText = isOnline ? 'online' : 'offline'
+    return (
+        <div style={headerStyle}>
+            Support
+            <div id={`${isOnlineText}-dot`} style={isOnlineStyle}></div>
+            <span style={{ fontSize: '.8em', fontWeight: 300 }}>{isOnlineText}</span>
+        </div>)
+}
 const NameAndEmailForm = ({ close }: { close: () => void }) => {
     const [name, setName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
@@ -149,21 +189,20 @@ const NameAndEmailForm = ({ close }: { close: () => void }) => {
     const startButtonDisabled = !(name && email)
 
     return (
-        <div id="name-and-email-container" style={{ padding: '2em' }}>
-            <div style={{ fontSize: '1.2em' }}>Support</div>
+        <div id="name-and-email-container">
             <div id="name-and-email-card" style={nameAndEmailCardStyle}>
                 <div style={{}}>Leave us your name and email, so that we can get back to you if we are not online right now (optional)</div>
                 <form id="offline-form" action="" onSubmit={onSubmit} style={{ margin: '3em 1.5em 0' }}>
                     <div style={{ margin: '2em 0 0' }}>
                         <label>name
-                    <input style={{ marginLeft: '1em', height: '30px' }}
+                    <input style={nameEmailInputStyle}
                                 type="text" name="name" value={name} onChange={(e: any) => setName(e.target.value)} />
                         </label>
                     </div>
                     <br />
                     <div>
                         <label>email
-                    <input style={{ marginLeft: '1em', height: '30px' }}
+                    <input style={nameEmailInputStyle}
                                 type="text" name="email" value={email} onChange={(e: any) => setEmail(e.target.value)} />
                         </label>
                     </div>
@@ -253,7 +292,7 @@ export default () => {
         setIsOpen(!isOpen);
     }
 
-    const onContactFormSubmit = (e: any) => {
+    const onContactFormSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (inputValue.trim() === '') return;
         setMessages((messages) => [...messages, { name: 'me', text: inputValue }])
@@ -269,6 +308,7 @@ export default () => {
                     aria-label="chatty customer support"
                     style={containerStyle}
                 >
+                    <Header />
                     {askNameEmail ?
                         <NameAndEmailForm close={() => setAskNameEmail(false)} />
                         : (
